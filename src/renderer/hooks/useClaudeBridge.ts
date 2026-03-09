@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSessionStore } from '../store/session.store'
 import { useAppStore } from '../store/app.store'
+import { useDebugLog } from '../components/chat/DebugLog'
 import type { ClaudeStatus } from '@shared/types'
 
 export function useClaudeBridge() {
@@ -11,6 +12,7 @@ export function useClaudeBridge() {
   const messages = useSessionStore((s) => s.messages)
   const setClaudeStatus = useAppStore((s) => s.setClaudeStatus)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
+  const log = useDebugLog((s) => s.addEntry)
 
   // Buffer for streaming output
   const bufferRef = useRef('')
@@ -42,14 +44,16 @@ export function useClaudeBridge() {
 
   useEffect(() => {
     const cleanupCommand = window.electronAPI.onClaudeCommand?.((data) => {
+      log('claude:command', 'in', data)
       if (data.action === 'clear') {
         clearMessages()
       }
     })
 
     const cleanupOutput = window.electronAPI.onClaudeOutput((data) => {
+      log('claude:output', 'in', data)
+
       if (data.type === 'system') {
-        // Permission prompt or system message
         addMessage({
           id: `msg-system-${Date.now()}`,
           role: 'system',
@@ -60,7 +64,6 @@ export function useClaudeBridge() {
       }
 
       if (data.type === 'stderr') {
-        // Show stderr as system message
         addMessage({
           id: `msg-system-${Date.now()}`,
           role: 'system',
@@ -79,6 +82,7 @@ export function useClaudeBridge() {
     })
 
     const cleanupStatus = window.electronAPI.onClaudeStatus((data) => {
+      log('claude:status', 'in', data)
       setClaudeStatus(data as ClaudeStatus)
 
       if (data.status === 'running') {
@@ -103,11 +107,12 @@ export function useClaudeBridge() {
         clearTimeout(flushTimerRef.current)
       }
     }
-  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, flushBuffer, clearMessages])
+  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, flushBuffer, clearMessages, log])
 
   const sendMessage = useCallback(
     (message: string) => {
-      // Add user message to store
+      log('claude:send', 'out', { message, sessionId: activeSessionId })
+
       addMessage({
         id: `msg-user-${Date.now()}`,
         role: 'user',
@@ -115,15 +120,15 @@ export function useClaudeBridge() {
         timestamp: new Date(),
       })
 
-      // Send to main process
       window.electronAPI.sendMessage(message, activeSessionId || undefined)
     },
-    [addMessage, activeSessionId]
+    [addMessage, activeSessionId, log]
   )
 
   const stopClaude = useCallback(() => {
+    log('claude:stop', 'out', {})
     window.electronAPI.stopClaude()
-  }, [])
+  }, [log])
 
   return { sendMessage, stopClaude, isStreaming, messages }
 }

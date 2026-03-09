@@ -8,6 +8,7 @@ import { ChatInput } from './ChatInput'
 import { StreamingIndicator } from './StreamingIndicator'
 import { EmptyState } from '../shared/EmptyState'
 import { CheckpointPanel } from './CheckpointPanel'
+import { DebugLogPanel } from './DebugLog'
 import { useState } from 'react'
 
 export function ChatPanel() {
@@ -54,7 +55,10 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {/* Debug log overlay */}
+      <DebugLogPanel />
+
       {/* Claude crash banner */}
       {claudeStatus.status === 'error' && (
         <div className="px-4 py-2 bg-error-muted border-b border-error/30 flex items-center gap-2 shrink-0">
