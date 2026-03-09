@@ -1,17 +1,16 @@
 <div align="center">
 
-<!-- Replace with actual banner once screenshots are ready -->
-<img src="docs/screenshots/banner.png" alt="Claudette Banner" width="100%" />
+<img src="docs/screenshots/files.png" alt="Claudette — File Explorer" width="100%" />
 
 <h1>Claudette</h1>
 
 <p><strong>The GUI that Claude Code should have shipped with.</strong></p>
 
 <p>
-  <a href="https://github.com/whateverai/claudette/releases"><img src="https://img.shields.io/github/v/release/whateverai/claudette?style=flat-square&color=7c6af7" alt="Release" /></a>
-  <a href="https://github.com/whateverai/claudette/blob/main/LICENSE"><img src="https://img.shields.io/github/license/whateverai/claudette?style=flat-square&color=4ade80" alt="License" /></a>
+  <a href="https://github.com/marylin/claudette/releases"><img src="https://img.shields.io/github/v/release/marylin/claudette?style=flat-square&color=7c6af7" alt="Release" /></a>
+  <a href="https://github.com/marylin/claudette/blob/main/LICENSE"><img src="https://img.shields.io/github/license/marylin/claudette?style=flat-square&color=4ade80" alt="License" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square&color=60a5fa" alt="Platform" />
-  <a href="https://github.com/whateverai/claudette/stargazers"><img src="https://img.shields.io/github/stars/whateverai/claudette?style=flat-square&color=fb923c" alt="Stars" /></a>
+  <a href="https://github.com/marylin/claudette/stargazers"><img src="https://img.shields.io/github/stars/marylin/claudette?style=flat-square&color=fb923c" alt="Stars" /></a>
 </p>
 
 <p>
@@ -50,17 +49,17 @@ Claudette is a free, open-source desktop app that wraps the Claude Code CLI in a
 ## 🚀 Installation
 
 ### Windows (Recommended)
-1. Download `Claudette-Setup.exe` from the [latest release](https://github.com/whateverai/claudette/releases/latest)
+1. Download `Claudette-Setup.exe` from the [latest release](https://github.com/marylin/claudette/releases/latest)
 2. Run the installer
 3. Open Claudette — it auto-detects your Claude Code CLI
 
 **Requirement**: [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) must be installed first.
 
 ### macOS
-Download `Claudette.dmg` from [releases](https://github.com/whateverai/claudette/releases/latest).
+Download `Claudette.dmg` from [releases](https://github.com/marylin/claudette/releases/latest).
 
 ### Linux
-Download `Claudette.AppImage` from [releases](https://github.com/whateverai/claudette/releases/latest).
+Download `Claudette.AppImage` from [releases](https://github.com/marylin/claudette/releases/latest).
 
 ---
 
@@ -68,20 +67,26 @@ Download `Claudette.AppImage` from [releases](https://github.com/whateverai/clau
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/chat.png" alt="Chat Panel" /></td>
-    <td><img src="docs/screenshots/git.png" alt="Git Panel" /></td>
-  </tr>
-  <tr>
-    <td><em>Chat with real-time streaming</em></td>
-    <td><em>Visual git diff & commit</em></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/agents.png" alt="Agents" /></td>
+    <td><img src="docs/screenshots/files.png" alt="File Explorer" /></td>
     <td><img src="docs/screenshots/usage.png" alt="Usage Dashboard" /></td>
   </tr>
   <tr>
+    <td><em>File explorer with project tree</em></td>
+    <td><em>Token usage analytics & cost tracking</em></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/agents.png" alt="Agents" /></td>
+    <td><img src="docs/screenshots/settings.png" alt="Settings" /></td>
+  </tr>
+  <tr>
     <td><em>Custom agent creation</em></td>
-    <td><em>Token usage analytics</em></td>
+    <td><em>Settings with MCP server management</em></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/files-terminal.png" alt="Terminal" /></td>
+  </tr>
+  <tr>
+    <td colspan="2"><em>Embedded terminal with file explorer</em></td>
   </tr>
 </table>
 
@@ -104,7 +109,7 @@ Your API keys and subscription stay exactly where they are — in Claude Code's 
 
 ```bash
 # Clone
-git clone https://github.com/whateverai/claudette.git
+git clone https://github.com/marylin/claudette.git
 cd claudette
 
 # Install dependencies
@@ -127,19 +132,21 @@ npm run dist       # all platforms
 
 Contributions are very welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
-**Good first issues**: check the [`good-first-issue`](https://github.com/whateverai/claudette/issues?q=label%3Agood-first-issue) label.
+**Good first issues**: check the [`good-first-issue`](https://github.com/marylin/claudette/issues?q=label%3Agood-first-issue) label.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Windows `.exe` installer (v0.1)
-- [ ] Chat + terminal + session history (v0.1)
-- [ ] File explorer + Git panel (v0.2)
-- [ ] CLAUDE.md editor + Agents (v0.2)
-- [ ] Usage dashboard (v0.3)
-- [ ] MCP server manager (v0.4)
-- [ ] Multi-project workspace (v0.4)
+- [x] Windows `.exe` installer (v0.1)
+- [x] Chat + terminal + session history (v0.1)
+- [x] File explorer + Git panel (v0.2)
+- [x] CLAUDE.md editor + Agents (v0.2)
+- [x] Usage dashboard (v0.3)
+- [x] MCP server manager (v0.4)
+- [x] Prompt templates (v0.4)
+- [ ] Multi-project workspace (v0.5)
+- [ ] Session checkpoints (v0.5)
 - [ ] Auto-updater (v0.5)
 
 ---
