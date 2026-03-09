@@ -4,7 +4,9 @@ import path from 'path'
 import { sendMessage, stopClaude } from './claude-bridge'
 import { listProjects, listSessions } from './session-manager'
 import { getSettings, updateSettings } from './settings'
-import type { FileNode } from '../shared/types'
+import { getGitStatus, getGitDiff, gitStage, gitUnstage, gitCommit } from './git-manager'
+import { listAgents, saveAgent, deleteAgent } from './agents-manager'
+import type { Agent, FileNode } from '../shared/types'
 
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', 'dist', '.next', '__pycache__',
@@ -40,22 +42,28 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
   })
 
   // Git (stubs for Phase 0.2)
-  ipcMain.handle('git:status', (_event, _projectPath: string) => {
-    return { branch: '', files: [], ahead: 0, behind: 0, isRepo: false }
+  ipcMain.handle('git:status', (_event, projectPath: string) => {
+    return getGitStatus(projectPath)
   })
 
-  ipcMain.handle('git:diff', (_event, _projectPath: string, _filePath: string) => {
-    return ''
+  ipcMain.handle('git:diff', (_event, projectPath: string, filePath: string) => {
+    return getGitDiff(projectPath, filePath)
   })
 
-  ipcMain.handle('git:stage', (_event, _projectPath: string, _files: string[]) => {})
-  ipcMain.handle('git:unstage', (_event, _projectPath: string, _files: string[]) => {})
-  ipcMain.handle('git:commit', (_event, _projectPath: string, _message: string) => {})
+  ipcMain.handle('git:stage', (_event, projectPath: string, files: string[]) => {
+    return gitStage(projectPath, files)
+  })
+  ipcMain.handle('git:unstage', (_event, projectPath: string, files: string[]) => {
+    return gitUnstage(projectPath, files)
+  })
+  ipcMain.handle('git:commit', (_event, projectPath: string, message: string) => {
+    return gitCommit(projectPath, message)
+  })
 
-  // Agents (stubs for Phase 0.2)
-  ipcMain.handle('agents:list', () => [])
-  ipcMain.handle('agents:save', (_event, _agent: unknown) => _agent)
-  ipcMain.handle('agents:delete', (_event, _agentId: string) => {})
+  // Agents
+  ipcMain.handle('agents:list', () => listAgents())
+  ipcMain.handle('agents:save', (_event, agent: Agent) => saveAgent(agent))
+  ipcMain.handle('agents:delete', (_event, agentId: string) => deleteAgent(agentId))
   ipcMain.handle('agents:run', (_event, _agentId: string, _prompt: string) => {})
 
   // CLAUDE.md
