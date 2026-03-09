@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, FolderOpen, RefreshCw, Check } from 'lucide-react'
 import { Button } from './Button'
+import { MCPPanel } from './MCPPanel'
 import { useAppStore } from '../../store/app.store'
 import type { Settings, AgentModel } from '@shared/types'
 
@@ -133,6 +134,12 @@ export function SettingsPanel() {
               <span className="text-sm text-text-secondary w-8 text-right">{localSettings.fontSize}px</span>
             </div>
           </SettingsField>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* MCP Servers */}
+          <MCPPanel />
         </div>
 
         {/* Footer */}

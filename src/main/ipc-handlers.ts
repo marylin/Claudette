@@ -7,6 +7,7 @@ import { getSettings, updateSettings } from './settings'
 import { getGitStatus, getGitDiff, gitStage, gitUnstage, gitCommit } from './git-manager'
 import { listAgents, saveAgent, deleteAgent } from './agents-manager'
 import { getUsageData } from './usage-analyzer'
+import { listMcpServers, addMcpServer, removeMcpServer, toggleMcpServer } from './mcp-manager'
 import type { Agent, FileNode } from '../shared/types'
 
 const IGNORED_DIRS = new Set([
@@ -83,6 +84,23 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
   ipcMain.handle('claude-md:write', (_event, projectPath: string, content: string) => {
     const mdPath = path.join(projectPath, 'CLAUDE.md')
     fs.writeFileSync(mdPath, content, 'utf-8')
+  })
+
+  // MCP Servers
+  ipcMain.handle('mcp:list', (_event, projectPath?: string) => {
+    return listMcpServers(projectPath)
+  })
+
+  ipcMain.handle('mcp:add', (_event, server: any, projectPath?: string) => {
+    return addMcpServer(server, projectPath)
+  })
+
+  ipcMain.handle('mcp:remove', (_event, name: string, scope: string, projectPath?: string) => {
+    return removeMcpServer(name, scope as 'global' | 'project', projectPath)
+  })
+
+  ipcMain.handle('mcp:toggle', (_event, name: string, scope: string, enabled: boolean, projectPath?: string) => {
+    return toggleMcpServer(name, scope as 'global' | 'project', enabled, projectPath)
   })
 
   // Usage

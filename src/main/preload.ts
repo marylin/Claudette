@@ -42,6 +42,12 @@ const electronAPI = {
   readClaudeMd: (projectPath: string) => ipcRenderer.invoke('claude-md:read', projectPath),
   writeClaudeMd: (projectPath: string, content: string) => ipcRenderer.invoke('claude-md:write', projectPath, content),
 
+  // MCP Servers
+  listMcpServers: (projectPath?: string) => ipcRenderer.invoke('mcp:list', projectPath),
+  addMcpServer: (server: unknown, projectPath?: string) => ipcRenderer.invoke('mcp:add', server, projectPath),
+  removeMcpServer: (name: string, scope: string, projectPath?: string) => ipcRenderer.invoke('mcp:remove', name, scope, projectPath),
+  toggleMcpServer: (name: string, scope: string, enabled: boolean, projectPath?: string) => ipcRenderer.invoke('mcp:toggle', name, scope, enabled, projectPath),
+
   // Usage
   getUsage: () => ipcRenderer.invoke('usage:get'),
 
