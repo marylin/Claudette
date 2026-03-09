@@ -2,7 +2,7 @@
 
 ## Current State
 Phase 0.1–1.0 COMPLETE (0.4-B/C deferred; 1.0-D launch assets deferred). Build passes, 39 tests pass.
-Remaining: Phase 1.0-D Launch Assets (screenshots, banner, demo — require running app).
+Phase 0.2-E shared components now complete (Tooltip, ContextMenu, ResizeHandle, LoadingSpinner).
 
 ## Next Steps
 Phase 1.0-D: Launch assets — need actual app running for screenshots/banner/demo
@@ -12,7 +12,7 @@ Phase 1.0-D: Launch assets — need actual app running for screenshots/banner/de
 
 ## Phase 0.2 — Visual Power [COMPLETE]
 [x] 39–55, 61–62. All core tasks complete. Committed: 22f21a3
-[ ] 56–60. Tooltip, ContextMenu, ResizeHandle, LoadingSpinner — deferred (not blocking)
+[x] 56–60. Tooltip (Radix), ContextMenu (Radix), ResizeHandle, LoadingSpinner + wired into App/StatusBar/TabBar/TerminalPanel. Committed: 20ec94d
 
 ## Phase 0.3 — Intelligence [COMPLETE]
 ### 0.3-A: Usage Dashboard
