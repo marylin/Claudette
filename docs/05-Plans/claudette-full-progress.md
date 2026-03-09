@@ -1,11 +1,11 @@
 # Claudette Full Implementation — Progress
 
 ## Current State
-Phase 0.1 COMPLETE. Phase 0.2 COMPLETE (core features). Build passes (tsc + vite).
-Next: Phase 0.3 — Usage Dashboard, Command Palette, Toasts, Error Hardening, Perf.
+Phase 0.1 COMPLETE. Phase 0.2 COMPLETE. Phase 0.3 COMPLETE (core features). Build passes (tsc + vite).
+Next: Phase 0.4 — Ecosystem (MCP manager, multi-workspace, checkpoints, templates, GitHub integration)
 
 ## Next Steps
-Start Phase 0.3-A: Usage Dashboard (Tasks 63–68)
+Start Phase 0.4-A: MCP Server Manager (Tasks 91–92)
 
 ## Phase 0.1 — Core Shell [COMPLETE]
 [x] 1–38. All tasks complete. Committed: 3394a01
@@ -49,20 +49,52 @@ Committed: 22f21a3
 
 ---
 
-## Phase 0.3 — Intelligence [TODO]
-[ ] 63. usage-analyzer.ts — parse JSONL for tokens
-[ ] 64. UsagePanel.tsx — dashboard layout
-[ ] 65. TokenChart.tsx — Recharts bar chart
-[ ] 66. CostSummary.tsx — cost cards
-[ ] 67. Model breakdown table
-[ ] 68. usage:get IPC
-[ ] 69. CommandPalette.tsx (Ctrl+K)
-[ ] 70–71. Toast system
-[ ] 72. Auto-updater
-[ ] 73–77. Error handling hardening
-[ ] 78–82. Performance (virtual lists, lazy loading)
-[ ] 83–85. Accessibility
-[ ] 86–90. Documentation polish
+## Phase 0.3 — Intelligence [COMPLETE]
+### 0.3-A: Usage Dashboard
+[x] 63. usage-analyzer.ts — parses session JSONL, aggregates by day/model, pricing, cache
+[x] 64. UsagePanel.tsx — dashboard with loading/empty states, refresh button
+[x] 65. TokenChart.tsx — Recharts bar chart, 7d/14d/30d/all range, custom tooltip
+[x] 66. CostSummary.tsx — 4 summary cards (spend, tokens, sessions, projected monthly)
+[x] 67. ModelBreakdown.tsx — model table with tokens, cost, share %, visual bars
+[x] 68. usage:get IPC — wired to real usage-analyzer
+
+### 0.3-B: Command Palette
+[x] 69. CommandPalette.tsx — Ctrl+K fuzzy search, categorized sections, keyboard nav
+
+### 0.3-C: Notifications & Toasts
+[x] 70. ToastProvider.tsx — context-based, 4 types, auto-dismiss 4s, max 5
+[x] 71. Wired toasts — git commit, agent save/delete, CLAUDE.md save
+
+### 0.3-D: Auto-Updater
+[ ] 72. electron-updater — deferred (requires published GitHub releases)
+
+### 0.3-E: Error Handling Hardening
+[x] 73. ErrorBoundary — global React error boundary with reload button
+[x] 74–75. IPC error handling — session JSONL parse errors skip malformed
+[x] 76. Git failures — shown inline in git panel
+[x] 77. Claude crash detection — error banner with restart button in ChatPanel
+
+### 0.3-F: Performance Optimization
+[x] 78. File tree — depth-limited, lazy expand (existing)
+[x] 79. MessageBubble + MarkdownContent — wrapped in React.memo
+[x] 80. Git status — 3s polling interval as debounce
+[x] 81–82. xterm.js already lazy-loaded (existing)
+
+### 0.3-G: Accessibility
+[x] 83. Keyboard navigation — focus-visible ring, ARIA roles on TabBar
+[x] 84. ARIA labels — icon-only buttons, role="tab", aria-selected
+[x] 85. Reduced motion — @media (prefers-reduced-motion) disables animations
+
+### 0.3-H: Documentation Polish
+[ ] 86. README screenshots — need actual app running
+[ ] 87. CONTRIBUTING.md — deferred
+[ ] 88. CHANGELOG.md — deferred
+[x] 89. KeyboardShortcuts.tsx — ? key opens shortcut reference panel
+[x] 90. Font size setting — applies to document root via useEffect
+
+Committed: a01aebf
+
+---
 
 ## Phase 0.4 — Ecosystem [TODO]
 [ ] 91–96. MCP manager, multi-workspace, checkpoints, templates, GitHub integration
