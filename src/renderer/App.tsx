@@ -47,7 +47,7 @@ export default function App() {
 
   // Load settings on mount
   useEffect(() => {
-    window.electronAPI.getSettings().then(setSettings)
+    window.electronAPI?.getSettings().then(setSettings)
   }, [setSettings])
 
   // Apply font size setting to root
