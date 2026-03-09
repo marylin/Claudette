@@ -1,10 +1,12 @@
 <div align="center">
 
-<img src="docs/screenshots/files.png" alt="Claudette — File Explorer" width="100%" />
+<img src="docs/screenshots/banner.jpg" alt="Claudette Banner" width="100%" />
 
-<h1>Claudette</h1>
+<br />
 
-<p><strong>The GUI that Claude Code should have shipped with.</strong></p>
+<p>
+  <img src="assets/icon.png" alt="Claudette" width="48" />
+</p>
 
 <p>
   <a href="https://github.com/marylin/claudette/releases"><img src="https://img.shields.io/github/v/release/marylin/claudette?style=flat-square&color=7c6af7" alt="Release" /></a>
@@ -67,26 +69,34 @@ Download `Claudette.AppImage` from [releases](https://github.com/marylin/claudet
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/files.png" alt="File Explorer" /></td>
+    <td><img src="docs/screenshots/chat.png" alt="Chat Panel" /></td>
     <td><img src="docs/screenshots/usage.png" alt="Usage Dashboard" /></td>
   </tr>
   <tr>
-    <td><em>File explorer with project tree</em></td>
+    <td><em>Chat panel with project sidebar</em></td>
     <td><em>Token usage analytics & cost tracking</em></td>
   </tr>
   <tr>
+    <td><img src="docs/screenshots/files.png" alt="File Explorer" /></td>
+    <td><img src="docs/screenshots/git.png" alt="Git Panel" /></td>
+  </tr>
+  <tr>
+    <td><em>File explorer with project tree</em></td>
+    <td><em>Git integration with diff viewer</em></td>
+  </tr>
+  <tr>
     <td><img src="docs/screenshots/agents.png" alt="Agents" /></td>
-    <td><img src="docs/screenshots/settings.png" alt="Settings" /></td>
+    <td><img src="docs/screenshots/command-palette.png" alt="Command Palette" /></td>
   </tr>
   <tr>
     <td><em>Custom agent creation</em></td>
-    <td><em>Settings with MCP server management</em></td>
+    <td><em>Command palette (Ctrl+K)</em></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/screenshots/files-terminal.png" alt="Terminal" /></td>
+    <td colspan="2"><img src="docs/screenshots/chat-with-terminal.png" alt="Terminal" /></td>
   </tr>
   <tr>
-    <td colspan="2"><em>Embedded terminal with file explorer</em></td>
+    <td colspan="2"><em>Chat with embedded terminal panel</em></td>
   </tr>
 </table>
 
