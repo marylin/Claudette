@@ -8,6 +8,7 @@ import { getGitStatus, getGitDiff, gitStage, gitUnstage, gitCommit } from './git
 import { listAgents, saveAgent, deleteAgent } from './agents-manager'
 import { getUsageData } from './usage-analyzer'
 import { listMcpServers, addMcpServer, removeMcpServer, toggleMcpServer } from './mcp-manager'
+import { listTemplates, saveTemplate, deleteTemplate, resolveTemplate } from './template-manager'
 import type { Agent, FileNode } from '../shared/types'
 
 const IGNORED_DIRS = new Set([
@@ -102,6 +103,12 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
   ipcMain.handle('mcp:toggle', (_event, name: string, scope: string, enabled: boolean, projectPath?: string) => {
     return toggleMcpServer(name, scope as 'global' | 'project', enabled, projectPath)
   })
+
+  // Templates
+  ipcMain.handle('templates:list', () => listTemplates())
+  ipcMain.handle('templates:save', (_event, template: any) => saveTemplate(template))
+  ipcMain.handle('templates:delete', (_event, id: string) => deleteTemplate(id))
+  ipcMain.handle('templates:resolve', (_event, prompt: string, variables: Record<string, string>) => resolveTemplate(prompt, variables))
 
   // Usage
   ipcMain.handle('usage:get', () => {
