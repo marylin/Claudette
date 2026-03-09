@@ -3,12 +3,14 @@ import { Bot, Plus, Pencil, Trash2, Play } from 'lucide-react'
 import { EmptyState } from '../shared/EmptyState'
 import { Button } from '../shared/Button'
 import { Badge } from '../shared/Badge'
+import { useToast } from '../shared/ToastProvider'
 import type { Agent, AgentModel } from '@shared/types'
 
 export function AgentsPanel() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [editing, setEditing] = useState<Partial<Agent> | null>(null)
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
   const refresh = async () => {
     const list = await window.electronAPI.listAgents()
@@ -20,6 +22,7 @@ export function AgentsPanel() {
 
   const handleSave = async () => {
     if (!editing?.name) return
+    const isNew = !editing.id
     await window.electronAPI.saveAgent({
       id: editing.id || `agent-${Date.now()}`,
       name: editing.name,
@@ -30,12 +33,15 @@ export function AgentsPanel() {
       createdAt: editing.createdAt || new Date(),
       updatedAt: new Date(),
     } as Agent)
+    toast('success', `Agent "${editing.name}" ${isNew ? 'created' : 'updated'}`)
     setEditing(null)
     refresh()
   }
 
   const handleDelete = async (id: string) => {
+    const agent = agents.find((a) => a.id === id)
     await window.electronAPI.deleteAgent(id)
+    toast('info', `Agent "${agent?.name || id}" deleted`)
     refresh()
   }
 

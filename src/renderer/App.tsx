@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { TitleBar } from './components/layout/TitleBar'
 import { Sidebar } from './components/layout/Sidebar'
 import { TabBar } from './components/layout/TabBar'
@@ -10,6 +10,7 @@ import { GitPanel } from './components/git/GitPanel'
 import { AgentsPanel } from './components/agents/AgentsPanel'
 import { UsagePanel } from './components/analytics/UsagePanel'
 import { SettingsPanel } from './components/shared/SettingsPanel'
+import { CommandPalette } from './components/shared/CommandPalette'
 import { useAppStore, type TabId } from './store/app.store'
 
 function MainPanel() {
@@ -38,6 +39,7 @@ export default function App() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const toggleTerminal = useAppStore((s) => s.toggleTerminal)
   const setSettings = useAppStore((s) => s.setSettings)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
 
   // Load settings on mount
   useEffect(() => {
@@ -73,6 +75,12 @@ export default function App() {
           toggleTerminal()
           return
         }
+
+        if (e.key === 'k') {
+          e.preventDefault()
+          setCommandPaletteOpen((o) => !o)
+          return
+        }
       }
     }
 
@@ -99,6 +107,7 @@ export default function App() {
       </div>
       <StatusBar />
       {settingsOpen && <SettingsPanel />}
+      <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }

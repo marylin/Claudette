@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { FileText, Save, Plus } from 'lucide-react'
 import { Button } from './Button'
 import { EmptyState } from './EmptyState'
+import { useToast } from './ToastProvider'
 import { useAppStore } from '../../store/app.store'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -31,14 +32,21 @@ export function ClaudeMdPanel() {
     })
   }, [activeProject])
 
+  const { toast } = useToast()
+
   const handleSave = useCallback(async () => {
     if (!activeProject) return
     setSaving(true)
-    await window.electronAPI.writeClaudeMd(activeProject.path, content)
-    setOriginal(content)
-    setExists(true)
+    try {
+      await window.electronAPI.writeClaudeMd(activeProject.path, content)
+      setOriginal(content)
+      setExists(true)
+      toast('success', 'CLAUDE.md saved')
+    } catch {
+      toast('error', 'Failed to save CLAUDE.md')
+    }
     setSaving(false)
-  }, [activeProject, content])
+  }, [activeProject, content, toast])
 
   const handleCreate = async () => {
     if (!activeProject) return

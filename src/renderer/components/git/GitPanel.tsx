@@ -4,6 +4,7 @@ import { EmptyState } from '../shared/EmptyState'
 import { Badge } from '../shared/Badge'
 import { Button } from '../shared/Button'
 import { useAppStore } from '../../store/app.store'
+import { useToast } from '../shared/ToastProvider'
 import { DiffViewer } from './DiffViewer'
 import { CommitPanel } from './CommitPanel'
 import type { GitStatus, GitFile } from '@shared/types'
@@ -52,12 +53,19 @@ export function GitPanel() {
     refresh()
   }
 
+  const { toast } = useToast()
+
   const handleCommit = async (message: string) => {
     if (!activeProject) return
-    await window.electronAPI.gitCommit(activeProject.path, message)
-    refresh()
-    setSelectedFile(null)
-    setDiff('')
+    try {
+      await window.electronAPI.gitCommit(activeProject.path, message)
+      toast('success', `Committed: ${message.slice(0, 50)}`)
+      refresh()
+      setSelectedFile(null)
+      setDiff('')
+    } catch (err) {
+      toast('error', `Commit failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
   }
 
   if (!activeProject) {
