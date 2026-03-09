@@ -1,106 +1,71 @@
 # Claudette Full Implementation — Progress
 
 ## Current State
-Phase 0.1 COMPLETE. All 38 tasks done. App builds cleanly (tsc + vite).
-Next: Phase 0.2 — File Explorer, Git Panel, CLAUDE.md Editor, Agents Manager.
+Phase 0.1 COMPLETE. Phase 0.2 COMPLETE (core features). Build passes (tsc + vite).
+Next: Phase 0.3 — Usage Dashboard, Command Palette, Toasts, Error Hardening, Perf.
 
 ## Next Steps
-Start Phase 0.2-A: File Explorer (Tasks 39–42)
+Start Phase 0.3-A: Usage Dashboard (Tasks 63–68)
 
 ## Phase 0.1 — Core Shell [COMPLETE]
-### 0.1-A: Build Infrastructure
-[x] 1. vite.config.ts — React plugin, path aliases
-[x] 2. preload.ts — contextBridge with full typed IPC API
-[x] 3. npm install — 653 packages
-[x] 4. Build pipeline — tsc + vite pass clean
+[x] 1–38. All tasks complete. Committed: 3394a01
 
-### 0.1-B: Main Process
-[x] 5. index.ts — Electron lifecycle, frameless window, window controls
-[x] 6. ipc-handlers.ts — all channels registered
-[x] 7. claude-bridge.ts — spawn CLI, readline, 16ms buffer, permission detection
-[x] 8. session-manager.ts — read ~/.claude/projects/, parse JSONL
-[x] 9. settings.ts — JSON persistence, auto-detect CLI path
+## Phase 0.2 — Visual Power [COMPLETE]
+### 0.2-A: File Explorer
+[x] 39. fs:readdir/readfile IPC — already in ipc-handlers.ts from Phase 0.1
+[x] 40. FileExplorer.tsx — split layout, search filter, file selection
+[x] 41. FileTree.tsx — recursive tree, file type icons, expand/collapse, filter matching
+[x] 42. CodeViewer.tsx — line numbers, language detection, copy button
 
-### 0.1-C: Renderer Foundation
-[x] 10. index.html — Vite entry, CSP, fonts
-[x] 11. main.tsx — React root
-[x] 12. globals.css — Tailwind, scrollbar, drag regions
-[x] 13. App.tsx — root layout with keyboard shortcuts
+### 0.2-B: Git Panel
+[x] 43. git-manager.ts — real simple-git: status, diff, stage, unstage, commit
+[x] 44. GitPanel.tsx — file list, branch header, ahead/behind badges, 3s polling
+[x] 45. DiffViewer.tsx — unified diff parser, color-coded add/remove, line numbers
+[x] 46. CommitPanel.tsx — stage/unstage all, commit message, commit button
+[x] 47. useGit.ts — status polling hook
 
-### 0.1-D: State Management
-[x] 14. app.store.ts — project, tabs, sidebar, status, settings
-[x] 15. session.store.ts — sessions, messages, streaming
-[x] 16. project.store.ts — projects list, fetch
+### 0.2-C: CLAUDE.md Editor
+[x] 48. claude-md IPC — already in ipc-handlers.ts from Phase 0.1
+[x] 49. ClaudeMdPanel.tsx — split editor + preview, Ctrl+S, create-if-missing
+[x] 50. Sidebar dot — already shows FileText icon for hasClaudeMd
 
-### 0.1-E: Shared UI
-[x] 17. Button.tsx — 4 variants, 3 sizes, loading
-[x] 18. Badge.tsx — 5 variants
-[x] 19. EmptyState.tsx — icon + title + CTA
+### 0.2-D: Agents Manager
+[x] 51. agents-manager.ts — JSON storage CRUD in userData
+[x] 52. AgentsPanel.tsx — grid view, create/edit/delete
+[x] 53. AgentCard.tsx — inline in AgentsPanel
+[x] 54. AgentEditor.tsx — inline in AgentsPanel (name, desc, prompt, model)
+[x] 55. agents IPC — wired to real agents-manager
 
-### 0.1-F: Layout
-[x] 20. TitleBar.tsx — frameless, draggable, controls
-[x] 21. Sidebar.tsx — projects, sessions, collapsed mode
-[x] 22. TabBar.tsx — 5 tabs with icons
-[x] 23. StatusBar.tsx — status dot, terminal toggle, settings gear
+### 0.2-E: Additional Shared UI
+[ ] 56–60. Tooltip, ContextMenu, ResizeHandle, LoadingSpinner, KeyboardShortcut — deferred (not blocking)
 
-### 0.1-G: Chat System
-[x] 24. ChatPanel.tsx — messages, auto-scroll, FAB
-[x] 25. MessageBubble.tsx — markdown, code blocks, copy
-[x] 26. ChatInput.tsx — textarea, send/stop, char count
-[x] 27. StreamingIndicator.tsx — pulsing dots
-[x] 28. useClaudeBridge.ts — IPC, 16ms buffer
-[x] 29. Permission prompts — system messages inline
+### 0.2-F: Keyboard Shortcuts
+[x] 61. Global shortcuts — Ctrl+1-5 (tabs), Ctrl+B (sidebar), Ctrl+` (terminal), Ctrl+S (save) — in App.tsx
 
-### 0.1-H: Session Management
-[x] 30. useSession.ts — list/resume/create
-[x] 31. Session list UI — sidebar expandable
+### 0.2-G: Animations & Polish
+[x] 62. Tailwind animations — fade-in, slide-in, pulse-soft defined in config. Loading skeletons in Sidebar.
 
-### 0.1-I: Terminal
-[x] 32. TerminalPanel.tsx — lazy xterm.js, resize, theme
-
-### 0.1-J: Onboarding & Settings
-[x] 33. Onboarding.tsx — CLI detection, step cards
-[x] 34. SettingsPanel.tsx — CLI path, model, permissions, font size
-
-### 0.1-K: Build & Package
-[x] 35. App icon — SVG with gradient
-[x] 36. Build verified — tsc + vite both pass
-[x] 37. GitHub Actions — build.yml for CI + release
-[x] 38. README — already complete from scaffold
+Committed: 22f21a3
 
 ---
 
-## Phase 0.2 — Visual Power
-### 0.2-A: File Explorer
-[ ] 39. fs:readdir/readfile IPC handlers
-[ ] 40. FileExplorer.tsx
-[ ] 41. FileTree.tsx
-[ ] 42. CodeViewer.tsx
+## Phase 0.3 — Intelligence [TODO]
+[ ] 63. usage-analyzer.ts — parse JSONL for tokens
+[ ] 64. UsagePanel.tsx — dashboard layout
+[ ] 65. TokenChart.tsx — Recharts bar chart
+[ ] 66. CostSummary.tsx — cost cards
+[ ] 67. Model breakdown table
+[ ] 68. usage:get IPC
+[ ] 69. CommandPalette.tsx (Ctrl+K)
+[ ] 70–71. Toast system
+[ ] 72. Auto-updater
+[ ] 73–77. Error handling hardening
+[ ] 78–82. Performance (virtual lists, lazy loading)
+[ ] 83–85. Accessibility
+[ ] 86–90. Documentation polish
 
-### 0.2-B: Git Panel
-[ ] 43. git-manager.ts (simple-git)
-[ ] 44. GitPanel.tsx
-[ ] 45. DiffViewer.tsx
-[ ] 46. CommitPanel.tsx
-[ ] 47. useGit.ts
+## Phase 0.4 — Ecosystem [TODO]
+[ ] 91–96. MCP manager, multi-workspace, checkpoints, templates, GitHub integration
 
-### 0.2-C: CLAUDE.md Editor
-[ ] 48. claude-md IPC handlers
-[ ] 49. ClaudeMdPanel.tsx
-[ ] 50. Sidebar dot indicator
-
-### 0.2-D: Agents Manager
-[ ] 51. agents-manager.ts
-[ ] 52. AgentsPanel.tsx
-[ ] 53. AgentCard.tsx
-[ ] 54. AgentEditor.tsx
-[ ] 55. agents IPC wiring
-
-### 0.2-E: Additional Shared UI
-[ ] 56–60. Tooltip, ContextMenu, ResizeHandle, LoadingSpinner, KeyboardShortcut
-
-### 0.2-F: Keyboard Shortcuts
-[ ] 61. Global shortcut system
-
-### 0.2-G: Animations & Polish
-[ ] 62. Transitions and skeletons
+## Phase 1.0 — Stable Launch [TODO]
+[ ] 97–120. Polish audits, testing, release infra, launch assets, community
