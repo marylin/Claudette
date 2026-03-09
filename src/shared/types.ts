@@ -8,7 +8,7 @@ export interface Project {
   encodedPath: string
   lastSessionAt: Date | null
   sessionCount: number
-  hasClaludeMd: boolean
+  hasClaudeMd: boolean
 }
 
 export interface Session {
