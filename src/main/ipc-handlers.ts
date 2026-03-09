@@ -9,6 +9,7 @@ import { listAgents, saveAgent, deleteAgent } from './agents-manager'
 import { getUsageData } from './usage-analyzer'
 import { listMcpServers, addMcpServer, removeMcpServer, toggleMcpServer } from './mcp-manager'
 import { listTemplates, saveTemplate, deleteTemplate, resolveTemplate } from './template-manager'
+import { checkForUpdates, downloadUpdate, installUpdate, getUpdateStatus } from './auto-updater'
 import type { Agent, FileNode } from '../shared/types'
 
 const IGNORED_DIRS = new Set([
@@ -129,6 +130,12 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
   ipcMain.handle('settings:set', (_event, partial: Record<string, unknown>) => {
     return updateSettings(partial as any)
   })
+
+  // Auto-updater
+  ipcMain.handle('updater:check', () => checkForUpdates())
+  ipcMain.handle('updater:download', () => downloadUpdate())
+  ipcMain.handle('updater:install', () => installUpdate())
+  ipcMain.handle('updater:status', () => getUpdateStatus())
 
   // File system
   ipcMain.handle('fs:readdir', (_event, dirPath: string) => {

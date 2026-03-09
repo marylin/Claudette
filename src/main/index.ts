@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'path'
 import { registerIpcHandlers } from './ipc-handlers'
+import { initAutoUpdater } from './auto-updater'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -57,6 +58,9 @@ function createWindow() {
 app.whenReady().then(() => {
   registerIpcHandlers(ipcMain)
   createWindow()
+  if (app.isPackaged) {
+    initAutoUpdater()
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -13,6 +13,7 @@ import { SettingsPanel } from './components/shared/SettingsPanel'
 import { CommandPalette } from './components/shared/CommandPalette'
 import { KeyboardShortcuts } from './components/shared/KeyboardShortcuts'
 import { TooltipProvider } from './components/shared/Tooltip'
+import { UpdateBanner } from './components/shared/UpdateBanner'
 import { useAppStore, type TabId } from './store/app.store'
 
 function MainPanel() {
@@ -114,6 +115,7 @@ export default function App() {
     <TooltipProvider>
       <div className="flex flex-col h-screen w-screen bg-bg-base">
         <TitleBar />
+        <UpdateBanner />
         <div className="flex flex-1 min-h-0">
           <Sidebar />
           <div className="flex flex-col flex-1 min-w-0">

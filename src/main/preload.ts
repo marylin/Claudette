@@ -56,6 +56,17 @@ const electronAPI = {
   removeMcpServer: (name: string, scope: string, projectPath?: string) => ipcRenderer.invoke('mcp:remove', name, scope, projectPath),
   toggleMcpServer: (name: string, scope: string, enabled: boolean, projectPath?: string) => ipcRenderer.invoke('mcp:toggle', name, scope, enabled, projectPath),
 
+  // Auto-updater
+  checkForUpdates: () => ipcRenderer.invoke('updater:check'),
+  downloadUpdate: () => ipcRenderer.invoke('updater:download'),
+  installUpdate: () => ipcRenderer.invoke('updater:install'),
+  getUpdateStatus: () => ipcRenderer.invoke('updater:status'),
+  onUpdateStatus: (callback: (status: any) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, status: any) => callback(status)
+    ipcRenderer.on('updater:status', listener)
+    return () => ipcRenderer.removeListener('updater:status', listener)
+  },
+
   // Usage
   getUsage: () => ipcRenderer.invoke('usage:get'),
 
