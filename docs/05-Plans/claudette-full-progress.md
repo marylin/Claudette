@@ -1,13 +1,11 @@
 # Claudette Full Implementation — Progress
 
 ## Current State
-Phase 0.1–0.3 COMPLETE. Phase 0.4 partially complete (A, D, E done; B, C deferred). Build passes.
-Next: Phase 0.4-B Multi-workspace (task 93) or Phase 0.4-C Checkpoints (task 94), or skip to Phase 1.0.
+Phase 0.1–0.4 COMPLETE (0.4-B/C deferred). Phase 1.0-A COMPLETE. Build passes.
+Next: Phase 1.0-B Testing (tasks 103–107).
 
 ## Next Steps
-Phase 0.4-B: Multi-workspace support (task 93) — large task
-Phase 0.4-C: Session Checkpoints (task 94) — large task
-Or skip to Phase 1.0-A: Final Polish Pass
+Phase 1.0-B: Testing — Electron integration tests, unit tests, manual test matrix
 
 ## Phase 0.1 — Core Shell [COMPLETE]
 [x] 1–38. All tasks complete. Committed: 3394a01
@@ -54,5 +52,28 @@ Or skip to Phase 1.0-A: Final Polish Pass
 ### 0.4-C: Session Checkpoints
 [ ] 94. Checkpoint system — deferred (large scope)
 
-## Phase 1.0 — Stable Launch [TODO]
-[ ] 97–120. Polish audits, testing, release infra, launch assets, community
+## Phase 1.0 — Stable Launch [IN PROGRESS]
+### 1.0-A: Final Polish Pass
+[x] 97. Dark mode audit — replaced text-white with text-text-primary across 7 files, fixed terminal brightWhite, chart cursor
+[x] 98. Typography audit — verified font system, terminal lineHeight 1.4 appropriate
+[x] 99. Animation audit — standardized transitions to duration-100, added missing transitions to 7 components
+[x] 100. Empty state audit — all lists have empty states, added sessions empty state in Sidebar
+[x] 101. Loading state audit — all async ops have loading indicators
+[x] 102. Error state audit — added try-catch+toast to AgentsPanel, UsagePanel error state, TemplatePicker, GitPanel diff, Sidebar sessions
+Committed: 7cdf110
+
+### 1.0-B: Testing
+[ ] 103. Electron integration tests — Playwright for IPC handlers
+[ ] 104. Unit tests — session-manager.ts, git-manager.ts, usage-analyzer.ts, claude-bridge.ts
+[ ] 105. Manual test matrix — Windows 10/11, macOS, Ubuntu
+[ ] 106. Auth testing — subscription + API key
+[ ] 107. Edge case testing — empty ~/.claude/, large projects, malformed JSONL
+
+### 1.0-C: Release Infrastructure
+[ ] 108–112. GitHub Releases, code signing, SECURITY.md, issue/PR templates
+
+### 1.0-D: Launch Assets
+[ ] 113–117. Banner, screenshots, demo video, Product Hunt, Show HN
+
+### 1.0-E: Community Setup
+[ ] 118–120. GitHub Discussions, labels, response SLA
