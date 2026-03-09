@@ -80,7 +80,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/whateverai/claudette"
+    "url": "https://github.com/marylin/claudette"
   },
   "build": {
     "appId": "dev.whateverai.claudette",
@@ -92,6 +92,11 @@
       "dist/**/*",
       "assets/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "marylin",
+      "repo": "claudette"
+    },
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -104,11 +109,13 @@
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.icns"
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
     },
     "linux": {
       "target": "AppImage",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.png",
+      "category": "Development"
     }
   }
 }
