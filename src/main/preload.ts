@@ -21,6 +21,21 @@ const electronAPI = {
     ipcRenderer.on('claude:command', listener)
     return () => { ipcRenderer.removeListener('claude:command', listener) }
   },
+  onClaudeSession: (callback: (data: { sessionId: string }) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: { sessionId: string }) => callback(data)
+    ipcRenderer.on('claude:session', listener)
+    return () => { ipcRenderer.removeListener('claude:session', listener) }
+  },
+  onClaudeToolUse: (callback: (data: any) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: any) => callback(data)
+    ipcRenderer.on('claude:tool-use', listener)
+    return () => { ipcRenderer.removeListener('claude:tool-use', listener) }
+  },
+  onClaudeCost: (callback: (data: any) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: any) => callback(data)
+    ipcRenderer.on('claude:cost', listener)
+    return () => { ipcRenderer.removeListener('claude:cost', listener) }
+  },
 
   // Projects
   listProjects: () => ipcRenderer.invoke('projects:list'),

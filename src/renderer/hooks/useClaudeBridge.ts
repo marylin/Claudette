@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSessionStore } from '../store/session.store'
 import { useAppStore } from '../store/app.store'
-import { useDebugLog } from '../components/chat/DebugLog'
 import type { ClaudeStatus } from '@shared/types'
 
 export function useClaudeBridge() {
@@ -12,9 +11,9 @@ export function useClaudeBridge() {
   const messages = useSessionStore((s) => s.messages)
   const setClaudeStatus = useAppStore((s) => s.setClaudeStatus)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
-  const log = useDebugLog((s) => s.addEntry)
+  const setActiveSessionId = useSessionStore((s) => s.setActiveSessionId)
 
-  // Buffer for streaming output
+  // Buffer for streaming output — batch 16ms to avoid React re-render spam
   const bufferRef = useRef('')
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAssistantMsgRef = useRef(false)
@@ -43,19 +42,18 @@ export function useClaudeBridge() {
   const clearMessages = useSessionStore((s) => s.clearMessages)
 
   useEffect(() => {
+    // Command events (clear, etc.)
     const cleanupCommand = window.electronAPI.onClaudeCommand?.((data) => {
-      log('claude:command', 'in', data)
       if (data.action === 'clear') {
         clearMessages()
       }
     })
 
+    // Streaming text output
     const cleanupOutput = window.electronAPI.onClaudeOutput((data) => {
-      log('claude:output', 'in', data)
-
       if (data.type === 'system') {
         addMessage({
-          id: `msg-system-${Date.now()}`,
+          id: `msg-system-${Date.now()}-${Math.random()}`,
           role: 'system',
           content: data.text,
           timestamp: new Date(),
@@ -65,7 +63,7 @@ export function useClaudeBridge() {
 
       if (data.type === 'stderr') {
         addMessage({
-          id: `msg-system-${Date.now()}`,
+          id: `msg-system-${Date.now()}-${Math.random()}`,
           role: 'system',
           content: data.text,
           timestamp: new Date(),
@@ -74,15 +72,14 @@ export function useClaudeBridge() {
       }
 
       // Buffer stdout for 16ms batching
-      bufferRef.current += (bufferRef.current ? '\n' : '') + data.text
-
+      bufferRef.current += data.text
       if (!flushTimerRef.current) {
         flushTimerRef.current = setTimeout(flushBuffer, 16)
       }
     })
 
+    // Status changes
     const cleanupStatus = window.electronAPI.onClaudeStatus((data) => {
-      log('claude:status', 'in', data)
       setClaudeStatus(data as ClaudeStatus)
 
       if (data.status === 'running') {
@@ -99,20 +96,33 @@ export function useClaudeBridge() {
       }
     })
 
+    // Session ID from SDK
+    const cleanupSession = window.electronAPI.onClaudeSession?.((data) => {
+      if (data.sessionId) {
+        setActiveSessionId(data.sessionId)
+      }
+    })
+
+    // Cost info
+    const cleanupCost = window.electronAPI.onClaudeCost?.((data) => {
+      // Store cost in app state for status bar
+      useAppStore.getState().setLastCost(data)
+    })
+
     return () => {
       cleanupCommand?.()
       cleanupOutput()
       cleanupStatus()
+      cleanupSession?.()
+      cleanupCost?.()
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current)
       }
     }
-  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, flushBuffer, clearMessages, log])
+  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, setActiveSessionId, flushBuffer, clearMessages])
 
   const sendMessage = useCallback(
     (message: string) => {
-      log('claude:send', 'out', { message, sessionId: activeSessionId })
-
       addMessage({
         id: `msg-user-${Date.now()}`,
         role: 'user',
@@ -122,13 +132,12 @@ export function useClaudeBridge() {
 
       window.electronAPI.sendMessage(message, activeSessionId || undefined)
     },
-    [addMessage, activeSessionId, log]
+    [addMessage, activeSessionId]
   )
 
   const stopClaude = useCallback(() => {
-    log('claude:stop', 'out', {})
     window.electronAPI.stopClaude()
-  }, [log])
+  }, [])
 
   return { sendMessage, stopClaude, isStreaming, messages }
 }

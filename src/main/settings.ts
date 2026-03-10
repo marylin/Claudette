@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS: Settings = {
   claudePath: '',
   defaultModel: 'claude-sonnet-4-5',
   autoAcceptPermissions: false,
+  permissionMode: 'default',
   terminalVisible: false,
   sidebarCollapsed: false,
   fontSize: 13,
@@ -63,7 +64,15 @@ export function detectClaudePath(): string {
   try {
     const cmd = process.platform === 'win32' ? 'where claude' : 'which claude'
     const result = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim()
-    const firstLine = result.split('\n')[0].trim()
+    const lines = result.split('\n').map(l => l.trim()).filter(Boolean)
+
+    if (process.platform === 'win32') {
+      // Prefer .cmd file on Windows — the extensionless file is a bash script
+      const cmdLine = lines.find(l => l.toLowerCase().endsWith('.cmd'))
+      if (cmdLine && fs.existsSync(cmdLine)) return cmdLine
+    }
+
+    const firstLine = lines[0]
     if (firstLine && fs.existsSync(firstLine)) return firstLine
   } catch {
     // not found in PATH

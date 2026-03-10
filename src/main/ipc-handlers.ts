@@ -1,7 +1,7 @@
 import { IpcMain, app, dialog } from 'electron'
 import fs from 'fs'
 import path from 'path'
-import { sendMessage, stopClaude } from './claude-bridge'
+import { sendMessage, stopClaude, setProjectPath } from './claude-bridge'
 import { listProjects, listSessions, deleteSession } from './session-manager'
 import { getSettings, updateSettings } from './settings'
 import { getGitStatus, getGitDiff, gitStage, gitUnstage, gitCommit, getGitRemoteUrl, getGitLog } from './git-manager'
@@ -190,6 +190,7 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
   ipcMain.handle('project:set-current', (_event, projectPath: string) => {
     addRecentProject(projectPath)
     setLastProject(projectPath)
+    setProjectPath(projectPath)
     startWatching(projectPath)
     setPtyProject(projectPath)
     const win = getMainWindow()

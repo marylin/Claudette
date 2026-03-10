@@ -22,6 +22,7 @@
     "capture:video": "npm run build && npx playwright test tests/e2e/capture-assets.spec.ts"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.71",
     "@monaco-editor/react": "^4.6.0",
     "@radix-ui/react-context-menu": "^2.2.16",
     "@radix-ui/react-dialog": "^1.0.5",

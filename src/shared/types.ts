@@ -85,10 +85,13 @@ export interface UsageData {
   }>
 }
 
+export type PermissionMode = 'default' | 'acceptEdits' | 'bypassPermissions'
+
 export interface Settings {
-  claudePath: string
-  defaultModel: AgentModel
-  autoAcceptPermissions: boolean
+  claudePath: string // legacy, kept for backward compat
+  defaultModel: string
+  autoAcceptPermissions: boolean // legacy, mapped to permissionMode
+  permissionMode: PermissionMode
   terminalVisible: boolean
   sidebarCollapsed: boolean
   fontSize: number
@@ -98,6 +101,21 @@ export interface Settings {
 export interface ClaudeStatus {
   status: 'idle' | 'running' | 'waiting-permission' | 'error'
   message?: string
+}
+
+export interface ToolUseEvent {
+  toolName: string
+  toolUseId: string
+  input: Record<string, unknown>
+  summary: string
+}
+
+export interface CostEvent {
+  totalCostUsd: number
+  inputTokens: number
+  outputTokens: number
+  numTurns: number
+  durationMs: number
 }
 
 export interface Workspace {
@@ -125,6 +143,9 @@ export type IpcChannels = {
   'claude:stop': () => void
   'claude:output': { text: string; type: 'stdout' | 'stderr' | 'system' }
   'claude:status': ClaudeStatus
+  'claude:session': { sessionId: string }
+  'claude:tool-use': ToolUseEvent
+  'claude:cost': CostEvent
 
   // Projects
   'projects:list': () => Project[]

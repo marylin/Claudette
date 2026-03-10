@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, Settings, ClaudeStatus } from '@shared/types'
+import type { Project, Settings, ClaudeStatus, CostEvent } from '@shared/types'
 
 export type TabId = 'chat' | 'files' | 'git' | 'agents' | 'usage'
 
@@ -12,6 +12,7 @@ interface AppState {
 
   // Claude status
   claudeStatus: ClaudeStatus
+  lastCost: CostEvent | null
 
   // Settings
   settings: Settings | null
@@ -25,6 +26,7 @@ interface AppState {
   toggleTerminal: () => void
   setTerminalVisible: (visible: boolean) => void
   setClaudeStatus: (status: ClaudeStatus) => void
+  setLastCost: (cost: CostEvent) => void
   setSettings: (settings: Settings) => void
   setSettingsOpen: (open: boolean) => void
 }
@@ -35,6 +37,7 @@ export const useAppStore = create<AppState>((set) => ({
   sidebarCollapsed: false,
   terminalVisible: false,
   claudeStatus: { status: 'idle' },
+  lastCost: null,
   settings: null,
   settingsOpen: false,
 
@@ -45,6 +48,7 @@ export const useAppStore = create<AppState>((set) => ({
   toggleTerminal: () => set((s) => ({ terminalVisible: !s.terminalVisible })),
   setTerminalVisible: (visible) => set({ terminalVisible: visible }),
   setClaudeStatus: (status) => set({ claudeStatus: status }),
+  setLastCost: (cost) => set({ lastCost: cost }),
   setSettings: (settings) => set({ settings }),
   setSettingsOpen: (open) => set({ settingsOpen: open }),
 }))

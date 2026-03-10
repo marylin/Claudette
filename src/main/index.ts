@@ -5,10 +5,11 @@ import { registerIpcHandlers } from './ipc-handlers'
 import { initAutoUpdater } from './auto-updater'
 import { getLastProject } from './config-manager'
 import { startWatching, stopWatching } from './fs-watcher'
+import { setProjectPath } from './claude-bridge'
 
 let mainWindow: BrowserWindow | null = null
 
-const isDev = !app.isPackaged
+const isDev = !app.isPackaged && process.env.NODE_ENV !== 'test'
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -46,7 +47,7 @@ function createWindow() {
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'))
   }
 
   mainWindow.once('ready-to-show', () => {
@@ -55,6 +56,7 @@ function createWindow() {
     // Restore last project
     const lastProject = getLastProject()
     if (lastProject && fs.existsSync(lastProject)) {
+      setProjectPath(lastProject)
       startWatching(lastProject)
       mainWindow?.webContents.send('project:changed', { path: lastProject })
     }
