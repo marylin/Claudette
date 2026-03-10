@@ -1,11 +1,10 @@
 # Agent SDK Bridge Rewrite — Progress
 
 ## Current State
-Phase A+B+C+D partially complete. Core bridge rewritten, builds clean. Remaining: status bar cost, auth check, settings UI, cleanup.
+Phases A-D complete. Phase F partially done (old bridge code removed). Remaining: auth check (13), model selector (14), permission mode (15), remove DebugLog (17), e2e test (18), final build verify (19).
 
 ## Next Steps
-Task 12: Update status bar to show cost from claude:cost event
-Then tasks 13-19 (auth check, model selector, permission mode, cleanup, test)
+Task 13: Auth check on startup — detect if Claude Code is authenticated, show onboarding if not
 
 ## Tasks
 
@@ -17,7 +16,7 @@ Then tasks 13-19 (auth check, model selector, permission mode, cleanup, test)
 - [x] 3. Rewrite `claude-bridge.ts` — full SDK rewrite with query(), includePartialMessages, AbortController
 - [x] 4. Update `sendMessage()` API — cwd, resume, permissionMode support
 - [x] 5. Implement `stopClaude()` — AbortController + query.close()
-- [x] 6. Handle slash commands — /compact, /review etc. mapped to prompts through SDK
+- [x] 6. Handle slash commands — mapped to prompts through SDK
 
 ### Phase C — Enhanced IPC Events
 - [x] 7. Add `claude:tool-use` IPC event
@@ -25,9 +24,9 @@ Then tasks 13-19 (auth check, model selector, permission mode, cleanup, test)
 - [x] 9. Add `claude:cost` IPC event
 
 ### Phase D — Renderer Updates
-- [x] 10. Update `useClaudeBridge` hook — handles new events, simplified buffer
-- [x] 11. Update session store — auto-set activeSessionId from claude:session
-- [ ] 12. Update status bar with cost
+- [x] 10. Update `useClaudeBridge` hook
+- [x] 11. Update session store — auto-set activeSessionId
+- [x] 12. Update status bar with cost display
 
 ### Phase E — Settings & Auth
 - [ ] 13. Auth check on startup
@@ -35,7 +34,7 @@ Then tasks 13-19 (auth check, model selector, permission mode, cleanup, test)
 - [ ] 15. Permission mode selector
 
 ### Phase F — Remove Dead Code & Test
-- [ ] 16. Remove old bridge code (detectClaudePath, .cmd logic)
+- [x] 16. Remove old bridge code (detectClaudePath, .cmd logic, execSync)
 - [ ] 17. Remove DebugLog.tsx
 - [ ] 18. Update Playwright e2e test
 - [ ] 19. Build verification
