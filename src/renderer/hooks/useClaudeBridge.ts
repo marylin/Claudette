@@ -37,7 +37,16 @@ export function useClaudeBridge() {
       const content = bufferRef.current
       bufferRef.current = ''
 
-      if (!hasAssistantMsgRef.current) {
+      // Check if the last message is still an assistant message we can append to.
+      // If system messages (tool-use summaries) were inserted since our last flush,
+      // hasAssistantMsgRef will have been reset, so we create a new bubble.
+      const msgs = useSessionStore.getState().messages
+      const lastMsg = msgs[msgs.length - 1]
+      const canAppend = hasAssistantMsgRef.current && lastMsg?.role === 'assistant'
+
+      if (canAppend) {
+        updateLastMessage(content)
+      } else {
         addMessage({
           id: `msg-assistant-${Date.now()}`,
           role: 'assistant',
@@ -46,23 +55,6 @@ export function useClaudeBridge() {
           isStreaming: true,
         })
         hasAssistantMsgRef.current = true
-      } else {
-        // updateLastMessage scans backward for the last assistant message,
-        // so it handles interspersed system messages from tool-use summaries.
-        // But if there's no assistant message at all (edge case), create one.
-        const msgs = useSessionStore.getState().messages
-        const hasAssistant = msgs.some((m) => m.role === 'assistant')
-        if (hasAssistant) {
-          updateLastMessage(content)
-        } else {
-          addMessage({
-            id: `msg-assistant-${Date.now()}`,
-            role: 'assistant',
-            content,
-            timestamp: new Date(),
-            isStreaming: true,
-          })
-        }
       }
     }
     flushTimerRef.current = null
@@ -81,12 +73,38 @@ export function useClaudeBridge() {
     // Streaming text output
     const cleanupOutput = window.electronAPI.onClaudeOutput((data) => {
       if (data.type === 'system') {
+        // Flush any pending text BEFORE inserting the system message,
+        // so text doesn't end up after the tool-use summary.
+        if (bufferRef.current && flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current)
+          flushTimerRef.current = null
+          // Inline flush — append to current assistant or create new
+          const content = bufferRef.current
+          bufferRef.current = ''
+          const msgs = useSessionStore.getState().messages
+          const lastMsg = msgs[msgs.length - 1]
+          if (hasAssistantMsgRef.current && lastMsg?.role === 'assistant') {
+            updateLastMessage(content)
+          } else {
+            addMessage({
+              id: `msg-assistant-${Date.now()}`,
+              role: 'assistant',
+              content,
+              timestamp: new Date(),
+              isStreaming: true,
+            })
+            hasAssistantMsgRef.current = true
+          }
+        }
+
         addMessage({
           id: `msg-system-${Date.now()}-${Math.random()}`,
           role: 'system',
           content: data.text,
           timestamp: new Date(),
         })
+        // After a system message, next text should start a new assistant bubble
+        hasAssistantMsgRef.current = false
         // Notify on errors
         const lower = data.text.toLowerCase()
         if (lower.startsWith('error') || lower.includes('failed') || lower.includes('blocked')) {
@@ -103,6 +121,7 @@ export function useClaudeBridge() {
           content: data.text,
           timestamp: new Date(),
         })
+        hasAssistantMsgRef.current = false
         return
       }
 

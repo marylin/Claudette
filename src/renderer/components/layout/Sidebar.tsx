@@ -34,6 +34,8 @@ export function Sidebar() {
 
   const handleSelectProject = (project: Project) => {
     setActiveProject(project)
+    // Notify backend (bridge, git, terminal, file watcher) about the project change
+    window.electronAPI.setCurrentProject(project.path)
     setExpandedProject(expandedProject === project.id ? null : project.id)
   }
 

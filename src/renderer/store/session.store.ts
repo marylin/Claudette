@@ -45,13 +45,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   updateLastMessage: (content) =>
     set((s) => {
       const messages = [...s.messages]
-      // Scan backward for the last assistant message (system messages from
-      // tool-use summaries may be interspersed during streaming)
-      for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'assistant') {
-          messages[i] = { ...messages[i], content: messages[i].content + content }
-          return { messages }
-        }
+      const lastIdx = messages.length - 1
+      if (lastIdx >= 0 && messages[lastIdx].role === 'assistant') {
+        messages[lastIdx] = { ...messages[lastIdx], content: messages[lastIdx].content + content }
       }
       return { messages }
     }),
