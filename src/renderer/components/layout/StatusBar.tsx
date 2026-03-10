@@ -10,6 +10,7 @@ export function StatusBar() {
   const terminalVisible = useAppStore((s) => s.terminalVisible)
   const toggleTerminal = useAppStore((s) => s.toggleTerminal)
   const setSettingsOpen = useAppStore((s) => s.setSettingsOpen)
+  const lastCost = useAppStore((s) => s.lastCost)
   const [repoUrl, setRepoUrl] = useState<string | null>(null)
 
   useEffect(() => {
@@ -44,6 +45,11 @@ export function StatusBar() {
         </div>
         {activeProject && (
           <span className="text-text-secondary">{activeProject.name}</span>
+        )}
+        {lastCost && (
+          <span className="text-text-muted" title={`${lastCost.inputTokens + lastCost.outputTokens} tokens · ${lastCost.numTurns} turns · ${(lastCost.durationMs / 1000).toFixed(1)}s`}>
+            ${lastCost.totalCostUsd.toFixed(4)}
+          </span>
         )}
       </div>
 

@@ -1,7 +1,6 @@
 import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { execSync } from 'child_process'
 import type { Settings } from '../shared/types'
 
 const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json')
@@ -29,7 +28,6 @@ export function getSettings(): Settings {
       cachedSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(data) }
     } else {
       cachedSettings = { ...DEFAULT_SETTINGS }
-      cachedSettings.claudePath = detectClaudePath()
       saveSettings(cachedSettings)
     }
   } catch {
@@ -59,47 +57,3 @@ function saveSettings(settings: Settings): void {
   }
 }
 
-export function detectClaudePath(): string {
-  // 1. Try PATH lookup
-  try {
-    const cmd = process.platform === 'win32' ? 'where claude' : 'which claude'
-    const result = execSync(cmd, { encoding: 'utf-8', timeout: 5000 }).trim()
-    const lines = result.split('\n').map(l => l.trim()).filter(Boolean)
-
-    if (process.platform === 'win32') {
-      // Prefer .cmd file on Windows — the extensionless file is a bash script
-      const cmdLine = lines.find(l => l.toLowerCase().endsWith('.cmd'))
-      if (cmdLine && fs.existsSync(cmdLine)) return cmdLine
-    }
-
-    const firstLine = lines[0]
-    if (firstLine && fs.existsSync(firstLine)) return firstLine
-  } catch {
-    // not found in PATH
-  }
-
-  // 2. Try common Windows locations
-  if (process.platform === 'win32') {
-    const appData = process.env.APPDATA || ''
-    const candidates = [
-      path.join(appData, 'npm', 'claude.cmd'),
-      path.join(appData, 'npm', 'claude'),
-      'C:\\Program Files\\nodejs\\claude.cmd',
-    ]
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate
-    }
-  }
-
-  // 3. Try common Unix locations
-  const unixCandidates = [
-    '/usr/local/bin/claude',
-    '/usr/bin/claude',
-    path.join(app.getPath('home'), '.npm-global', 'bin', 'claude'),
-  ]
-  for (const candidate of unixCandidates) {
-    if (fs.existsSync(candidate)) return candidate
-  }
-
-  return ''
-}
