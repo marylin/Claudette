@@ -47,7 +47,22 @@ export function useClaudeBridge() {
         })
         hasAssistantMsgRef.current = true
       } else {
-        updateLastMessage(content)
+        // updateLastMessage scans backward for the last assistant message,
+        // so it handles interspersed system messages from tool-use summaries.
+        // But if there's no assistant message at all (edge case), create one.
+        const msgs = useSessionStore.getState().messages
+        const hasAssistant = msgs.some((m) => m.role === 'assistant')
+        if (hasAssistant) {
+          updateLastMessage(content)
+        } else {
+          addMessage({
+            id: `msg-assistant-${Date.now()}`,
+            role: 'assistant',
+            content,
+            timestamp: new Date(),
+            isStreaming: true,
+          })
+        }
       }
     }
     flushTimerRef.current = null

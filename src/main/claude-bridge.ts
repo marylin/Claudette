@@ -12,6 +12,10 @@ let currentStatus: ClaudeStatus = { status: 'idle' }
 let currentSessionId: string | null = null
 let currentProjectPath: string | null = null
 
+// Track how much text we've already emitted for the current assistant turn,
+// so we can fill gaps from complete `assistant` messages without duplicating.
+let turnEmittedTextLength = 0
+
 // ─── File-based debug logging (SDK captures stdout/stderr) ──────────
 
 let _logFile: string | null = null
@@ -194,6 +198,8 @@ async function runQuery(prompt: string, sessionId?: string): Promise<void> {
     activeQuery = query({ prompt, options: options as any })
     debugLog('query() returned, starting iteration')
 
+    // Reset per-query state
+    turnEmittedTextLength = 0
     // Track seen tool IDs to avoid duplicate summaries
     const seenToolIds = new Set<string>()
     let messageCount = 0
@@ -249,24 +255,54 @@ function handleMessage(message: any, seenToolIds: Set<string>, msgNum: number): 
   // Streaming deltas — token-level text streaming
   if (type === 'stream_event') {
     const event = message.event
-    if (!event) return
+    if (!event) {
+      debugLog(`#${msgNum} stream_event with null event`)
+      return
+    }
 
     // content_block_delta with text
     if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-      sendOutput(event.delta.text, 'stdout')
+      const text = event.delta.text
+      sendOutput(text, 'stdout')
+      turnEmittedTextLength += text.length
     }
-    // Log non-delta events at lower frequency
-    else if (event.type === 'message_start' || event.type === 'message_stop') {
-      debugLog(`#${msgNum} stream_event.${event.type}`)
+    // New turn starting — reset text tracking
+    else if (event.type === 'message_start') {
+      turnEmittedTextLength = 0
+      debugLog(`#${msgNum} stream_event.message_start`)
+    }
+    else if (event.type === 'message_stop') {
+      debugLog(`#${msgNum} stream_event.message_stop`)
+    }
+    // Log other stream event types we're not handling (for diagnostics)
+    else if (event.type !== 'content_block_start' && event.type !== 'content_block_stop' && event.type !== 'content_block_delta' && event.type !== 'message_delta') {
+      debugLog(`#${msgNum} stream_event.${event.type} (unhandled)`)
     }
     return
   }
 
   // Complete assistant turn — extract tool uses and full text
   if (type === 'assistant') {
-    debugLog(`#${msgNum} assistant message`)
     const content = message.message?.content
     if (Array.isArray(content)) {
+      // Collect full text from all text blocks in this message
+      const fullText = content
+        .filter((b: any) => b.type === 'text' && b.text)
+        .map((b: any) => b.text)
+        .join('')
+
+      // If stream_event text_deltas didn't deliver this text, send it now.
+      // This handles cases where the SDK yields assistant messages without
+      // prior content_block_delta events (e.g. partial messages, tool-heavy flows).
+      if (fullText.length > turnEmittedTextLength) {
+        const newText = fullText.slice(turnEmittedTextLength)
+        sendOutput(newText, 'stdout')
+        turnEmittedTextLength = fullText.length
+        debugLog(`#${msgNum} assistant message — emitted ${newText.length} chars (gap fill)`)
+      } else {
+        debugLog(`#${msgNum} assistant message — ${fullText.length} chars (already streamed)`)
+      }
+
       for (const block of content) {
         if (block.type === 'tool_use') {
           const toolId = block.id || `${block.name}-${Math.random()}`
@@ -277,6 +313,8 @@ function handleMessage(message: any, seenToolIds: Set<string>, msgNum: number): 
           }
         }
       }
+    } else {
+      debugLog(`#${msgNum} assistant message — no content array`)
     }
     return
   }
