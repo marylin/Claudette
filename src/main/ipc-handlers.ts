@@ -18,9 +18,10 @@ import { spawnShell, writeToPty, resizePty, dispose as disposePty, setProject as
 import { getMainWindow } from './index'
 import type { Agent, FileNode, Workspace } from '../shared/types'
 
+// Only hide truly noise directories — everything else should be visible
 const IGNORED_DIRS = new Set([
-  'node_modules', '.git', 'dist', '.next', '__pycache__',
-  '.venv', 'venv', '.cache', 'coverage', '.turbo', '.nuxt',
+  'node_modules', '.git', '__pycache__',
+  '.venv', 'venv', '.cache', '.turbo',
 ])
 
 export function registerIpcHandlers(ipcMain: IpcMain): void {
@@ -238,14 +239,13 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
 }
 
 function readDirectory(dirPath: string, depth = 0): FileNode[] {
-  if (depth > 5) return []
+  if (depth > 10) return []
 
   try {
     const entries = fs.readdirSync(dirPath, { withFileTypes: true })
     const nodes: FileNode[] = []
 
     for (const entry of entries) {
-      if (entry.name.startsWith('.') && entry.name !== '.env') continue
       if (IGNORED_DIRS.has(entry.name)) continue
 
       const fullPath = path.join(dirPath, entry.name)
