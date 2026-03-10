@@ -36,6 +36,11 @@ const electronAPI = {
     ipcRenderer.on('claude:cost', listener)
     return () => { ipcRenderer.removeListener('claude:cost', listener) }
   },
+  onClaudeDebug: (callback: (data: { message: string }) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, data: { message: string }) => callback(data)
+    ipcRenderer.on('claude:debug', listener)
+    return () => { ipcRenderer.removeListener('claude:debug', listener) }
+  },
 
   // Projects
   listProjects: () => ipcRenderer.invoke('projects:list'),

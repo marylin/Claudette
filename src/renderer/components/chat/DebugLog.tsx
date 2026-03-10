@@ -39,6 +39,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   'claude:command': 'text-yellow-400',
   'claude:send': 'text-violet-400',
   'claude:stop': 'text-red-400',
+  'bridge:debug': 'text-amber-400',
   'error': 'text-red-400',
 }
 

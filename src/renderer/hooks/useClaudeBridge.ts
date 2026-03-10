@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSessionStore } from '../store/session.store'
 import { useAppStore } from '../store/app.store'
+import { useDebugLog } from '../components/chat/DebugLog'
 import type { ClaudeStatus } from '@shared/types'
 
 export function useClaudeBridge() {
@@ -109,12 +110,18 @@ export function useClaudeBridge() {
       useAppStore.getState().setLastCost(data)
     })
 
+    // Debug messages from bridge (file-based logging emitted to renderer)
+    const cleanupDebug = window.electronAPI.onClaudeDebug?.((data) => {
+      useDebugLog.getState().addEntry('bridge:debug', 'in', data.message)
+    })
+
     return () => {
       cleanupCommand?.()
       cleanupOutput()
       cleanupStatus()
       cleanupSession?.()
       cleanupCost?.()
+      cleanupDebug?.()
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current)
       }

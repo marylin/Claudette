@@ -1,4 +1,7 @@
 import { query, type Query } from '@anthropic-ai/claude-agent-sdk'
+import { app } from 'electron'
+import path from 'path'
+import fs from 'fs'
 import { getSettings } from './settings'
 import { getMainWindow } from './index'
 import type { ClaudeStatus, ToolUseEvent, CostEvent, PermissionMode } from '../shared/types'
@@ -8,6 +11,33 @@ let abortController: AbortController | null = null
 let currentStatus: ClaudeStatus = { status: 'idle' }
 let currentSessionId: string | null = null
 let currentProjectPath: string | null = null
+
+// ─── File-based debug logging (SDK captures stdout/stderr) ──────────
+
+let _logFile: string | null = null
+function getLogFile(): string {
+  if (!_logFile) {
+    _logFile = path.join(app.getPath('userData'), 'claude-bridge.log')
+    try { fs.writeFileSync(_logFile, '') } catch { /* ignore */ }
+  }
+  return _logFile
+}
+
+function debugLog(...args: unknown[]): void {
+  const line = `[${new Date().toISOString()}] ${args.map(a =>
+    typeof a === 'object' ? JSON.stringify(a) : String(a)
+  ).join(' ')}\n`
+  try {
+    fs.appendFileSync(getLogFile(), line)
+  } catch {
+    // Ignore write errors
+  }
+  // Also emit to renderer debug panel
+  const win = getMainWindow()
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('claude:debug', { message: line.trim() })
+  }
+}
 
 // ─── Local slash commands (never sent to Claude) ────────────────────
 
@@ -48,6 +78,7 @@ const PROMPT_COMMANDS: Record<string, string> = {
 
 export function setProjectPath(projectPath: string): void {
   currentProjectPath = projectPath
+  debugLog('setProjectPath:', projectPath)
 }
 
 export function sendMessage(message: string, sessionId?: string): void {
@@ -77,11 +108,16 @@ export function sendMessage(message: string, sessionId?: string): void {
   // Resolve prompt
   const prompt = PROMPT_COMMANDS[commandName] || trimmed
 
-  // Run the query
-  runQuery(prompt, sessionId)
+  // Run the query — MUST catch unhandled rejections
+  runQuery(prompt, sessionId).catch((err) => {
+    debugLog('Unhandled runQuery error:', err?.message || err)
+    sendOutput(`Error: ${err?.message || 'Unknown error'}`, 'system')
+    updateStatus({ status: 'error', message: err?.message })
+  })
 }
 
 export function stopClaude(): void {
+  debugLog('stopClaude called')
   if (abortController) {
     abortController.abort()
     abortController = null
@@ -122,6 +158,7 @@ async function runQuery(prompt: string, sessionId?: string): Promise<void> {
     includePartialMessages: true,
     permissionMode,
     systemPrompt: { type: 'preset', preset: 'claude_code' },
+    maxTurns: 200,
   }
 
   // Working directory
@@ -145,28 +182,45 @@ async function runQuery(prompt: string, sessionId?: string): Promise<void> {
   delete cleanEnv.CLAUDE_CODE_ENTRYPOINT
   options.env = cleanEnv
 
-  try {
-    console.log('[claude-bridge] starting query:', prompt.slice(0, 100))
+  // In the GUI, we can't prompt via stdin. Provide a canUseTool handler
+  // that auto-accepts all tool use. In the future, this could show a
+  // permission dialog in the renderer.
+  options.canUseTool = async () => ({ behavior: 'allow' as const })
 
+  debugLog('runQuery starting', {
+    prompt: prompt.slice(0, 100),
+    permissionMode: options.permissionMode,
+    model: options.model,
+    cwd: options.cwd,
+    sessionId: sessionId || null,
+  })
+
+  try {
     activeQuery = query({ prompt, options: options as any })
+    debugLog('query() returned, starting iteration')
 
     // Track seen tool IDs to avoid duplicate summaries
     const seenToolIds = new Set<string>()
+    let messageCount = 0
 
     for await (const message of activeQuery) {
-      if (abortController?.signal.aborted) break
+      messageCount++
+      if (abortController?.signal.aborted) {
+        debugLog('Aborted after', messageCount, 'messages')
+        break
+      }
 
-      handleMessage(message, seenToolIds)
+      handleMessage(message, seenToolIds, messageCount)
     }
 
-    console.log('[claude-bridge] query completed')
+    debugLog('query iteration complete,', messageCount, 'messages')
     updateStatus({ status: 'idle' })
   } catch (err: any) {
     if (err.name === 'AbortError' || abortController?.signal.aborted) {
-      console.log('[claude-bridge] query aborted')
+      debugLog('query aborted')
       updateStatus({ status: 'idle' })
     } else {
-      console.error('[claude-bridge] query error:', err.message)
+      debugLog('query error:', err.message, err.stack)
       sendOutput(`Error: ${err.message}`, 'system')
       updateStatus({ status: 'error', message: err.message })
     }
@@ -178,15 +232,21 @@ async function runQuery(prompt: string, sessionId?: string): Promise<void> {
 
 // ─── Message handler ────────────────────────────────────────────────
 
-function handleMessage(message: any, seenToolIds: Set<string>): void {
+function handleMessage(message: any, seenToolIds: Set<string>, msgNum: number): void {
   const type = message.type
 
   // System init — captures session ID, model info
   if (type === 'system') {
-    if (message.subtype === 'init' && message.session_id) {
-      currentSessionId = message.session_id
-      console.log('[claude-bridge] session:', currentSessionId)
-      emitSession(message.session_id)
+    if (message.subtype === 'init') {
+      if (message.session_id) {
+        currentSessionId = message.session_id
+        emitSession(message.session_id)
+      }
+      debugLog(`#${msgNum} system.init session=${message.session_id} model=${message.model}`)
+    } else if (message.subtype === 'status') {
+      debugLog(`#${msgNum} system.status:`, message.status)
+    } else {
+      debugLog(`#${msgNum} system.${message.subtype}`)
     }
     return
   }
@@ -200,11 +260,16 @@ function handleMessage(message: any, seenToolIds: Set<string>): void {
     if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
       sendOutput(event.delta.text, 'stdout')
     }
+    // Log non-delta events at lower frequency
+    else if (event.type === 'message_start' || event.type === 'message_stop') {
+      debugLog(`#${msgNum} stream_event.${event.type}`)
+    }
     return
   }
 
-  // Complete assistant turn — extract tool uses
+  // Complete assistant turn — extract tool uses and full text
   if (type === 'assistant') {
+    debugLog(`#${msgNum} assistant message`)
     const content = message.message?.content
     if (Array.isArray(content)) {
       for (const block of content) {
@@ -213,6 +278,7 @@ function handleMessage(message: any, seenToolIds: Set<string>): void {
           if (!seenToolIds.has(toolId)) {
             seenToolIds.add(toolId)
             emitToolUse(block.name, toolId, block.input || {})
+            debugLog(`  tool_use: ${block.name}`)
           }
         }
       }
@@ -220,8 +286,18 @@ function handleMessage(message: any, seenToolIds: Set<string>): void {
     return
   }
 
+  // Tool use summary
+  if (type === 'tool_use_summary') {
+    if (message.summary) {
+      sendOutput(message.summary, 'system')
+    }
+    return
+  }
+
   // Result — completion, cost, errors
   if (type === 'result') {
+    debugLog(`#${msgNum} result: subtype=${message.subtype} cost=${message.total_cost_usd}`)
+
     if (message.session_id) {
       currentSessionId = message.session_id
       emitSession(message.session_id)
@@ -248,15 +324,18 @@ function handleMessage(message: any, seenToolIds: Set<string>): void {
 
   // Tool progress — show elapsed time
   if (type === 'tool_progress') {
-    // Optionally could update UI with progress
     return
   }
 
   // Rate limit
   if (type === 'rate_limit_event') {
     sendOutput('Rate limited — waiting to retry...', 'system')
+    debugLog(`#${msgNum} rate_limit_event`)
     return
   }
+
+  // Catch-all for unrecognized message types
+  debugLog(`#${msgNum} unhandled message type: ${type}`)
 }
 
 // ─── IPC emitters ───────────────────────────────────────────────────
@@ -265,6 +344,8 @@ function sendOutput(text: string, type: 'stdout' | 'stderr' | 'system'): void {
   const win = getMainWindow()
   if (win && !win.isDestroyed()) {
     win.webContents.send('claude:output', { text, type })
+  } else {
+    debugLog('sendOutput failed: no valid window', { text: text.slice(0, 80), type })
   }
 }
 
