@@ -2,7 +2,18 @@ import { useEffect, useRef, useCallback } from 'react'
 import { useSessionStore } from '../store/session.store'
 import { useAppStore } from '../store/app.store'
 import { useDebugLog } from '../components/chat/DebugLog'
+import { useToast } from '../components/shared/ToastProvider'
 import type { ClaudeStatus } from '@shared/types'
+
+/** Send an OS notification when the window is not focused */
+function notify(title: string, body: string): void {
+  if (document.hasFocus()) return
+  try {
+    new Notification(title, { body, silent: false })
+  } catch {
+    // Notifications not supported or permission denied
+  }
+}
 
 export function useClaudeBridge() {
   const addMessage = useSessionStore((s) => s.addMessage)
@@ -13,11 +24,13 @@ export function useClaudeBridge() {
   const setClaudeStatus = useAppStore((s) => s.setClaudeStatus)
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
   const setActiveSessionId = useSessionStore((s) => s.setActiveSessionId)
+  const { toast } = useToast()
 
   // Buffer for streaming output — batch 16ms to avoid React re-render spam
   const bufferRef = useRef('')
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAssistantMsgRef = useRef(false)
+  const wasRunningRef = useRef(false)
 
   const flushBuffer = useCallback(() => {
     if (bufferRef.current) {
@@ -59,6 +72,12 @@ export function useClaudeBridge() {
           content: data.text,
           timestamp: new Date(),
         })
+        // Notify on errors
+        const lower = data.text.toLowerCase()
+        if (lower.startsWith('error') || lower.includes('failed') || lower.includes('blocked')) {
+          toast('error', data.text.slice(0, 150))
+          notify('Claudette — Error', data.text.slice(0, 150))
+        }
         return
       }
 
@@ -86,7 +105,8 @@ export function useClaudeBridge() {
       if (data.status === 'running') {
         setIsStreaming(true)
         hasAssistantMsgRef.current = false
-      } else if (data.status === 'idle' || data.status === 'error') {
+        wasRunningRef.current = true
+      } else if (data.status === 'idle') {
         // Flush remaining buffer
         if (flushTimerRef.current) {
           clearTimeout(flushTimerRef.current)
@@ -94,6 +114,25 @@ export function useClaudeBridge() {
         }
         setIsStreaming(false)
         hasAssistantMsgRef.current = false
+
+        // Notify task completed
+        if (wasRunningRef.current) {
+          wasRunningRef.current = false
+          toast('success', 'Claude finished responding')
+          notify('Claudette', 'Claude finished responding')
+        }
+      } else if (data.status === 'error') {
+        if (flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current)
+          flushBuffer()
+        }
+        setIsStreaming(false)
+        hasAssistantMsgRef.current = false
+        wasRunningRef.current = false
+
+        const errMsg = (data as ClaudeStatus).message || 'Something went wrong'
+        toast('error', errMsg)
+        notify('Claudette — Error', errMsg)
       }
     })
 
@@ -126,7 +165,7 @@ export function useClaudeBridge() {
         clearTimeout(flushTimerRef.current)
       }
     }
-  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, setActiveSessionId, flushBuffer, clearMessages])
+  }, [addMessage, updateLastMessage, setIsStreaming, setClaudeStatus, setActiveSessionId, flushBuffer, clearMessages, toast])
 
   const sendMessage = useCallback(
     (message: string) => {
