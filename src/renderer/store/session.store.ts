@@ -10,6 +10,7 @@ interface SessionState {
   // Messages
   messages: Message[]
   isStreaming: boolean
+  draft: string
 
   // Actions
   setSessions: (sessions: Session[]) => void
@@ -19,6 +20,7 @@ interface SessionState {
   updateLastMessage: (content: string) => void
   clearMessages: () => void
   setIsStreaming: (streaming: boolean) => void
+  setDraft: (draft: string) => void
 }
 
 let messageIdCounter = 0
@@ -29,6 +31,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   sessionsLoading: false,
   messages: [],
   isStreaming: false,
+  draft: '',
 
   setSessions: (sessions) => set({ sessions }),
   setActiveSessionId: (id) => set({ activeSessionId: id }),
@@ -51,4 +54,5 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   clearMessages: () => set({ messages: [], activeSessionId: null }),
   setIsStreaming: (streaming) => set({ isStreaming: streaming }),
+  setDraft: (draft) => set({ draft }),
 }))

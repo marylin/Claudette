@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Square, Bookmark } from 'lucide-react'
 import { clsx } from 'clsx'
 import { TemplatePicker } from './TemplatePicker'
+import { useSessionStore } from '../../store/session.store'
 
 interface ChatInputProps {
   onSend: (message: string) => void
@@ -11,7 +12,10 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSend, onStop, isStreaming, disabled }: ChatInputProps) {
-  const [value, setValue] = useState('')
+  const draft = useSessionStore((s) => s.draft)
+  const setDraft = useSessionStore((s) => s.setDraft)
+  const value = draft
+  const setValue = setDraft
   const [templateOpen, setTemplateOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
