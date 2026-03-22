@@ -12,7 +12,7 @@ export function TerminalPanel() {
   const [exited, setExited] = useState(false)
   const [height, setHeight] = useState(200)
   const setTerminalVisible = useAppStore((s) => s.setTerminalVisible)
-  const currentProject = useAppStore((s) => s.currentProject)
+  const activeProject = useAppStore((s) => s.activeProject)
 
   // Lazy load xterm.js + connect to PTY
   useEffect(() => {
@@ -111,7 +111,7 @@ export function TerminalPanel() {
         // Start PTY
         const cols = terminal.cols
         const rows = terminal.rows
-        const success = await window.electronAPI.startTerminal?.(cols, rows, currentProject || undefined)
+        const success = await window.electronAPI.startTerminal?.(cols, rows, activeProject?.path || undefined)
         if (success) {
           setConnected(true)
           setExited(false)
@@ -161,11 +161,11 @@ export function TerminalPanel() {
     setExited(false)
     const cols = terminal.cols
     const rows = terminal.rows
-    const success = await window.electronAPI.startTerminal?.(cols, rows, currentProject || undefined)
+    const success = await window.electronAPI.startTerminal?.(cols, rows, activeProject?.path || undefined)
     if (success) {
       setConnected(true)
     }
-  }, [currentProject])
+  }, [activeProject])
 
   return (
     <div style={{ height }}>

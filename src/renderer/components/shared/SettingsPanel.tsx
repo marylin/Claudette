@@ -43,9 +43,10 @@ export function SettingsPanel() {
   const handleDetect = async () => {
     setDetecting(true)
     try {
-      // Re-fetch settings which triggers auto-detection
-      const fresh = await window.electronAPI.getSettings()
-      setLocalSettings({ ...localSettings, claudePath: fresh.claudePath })
+      const detected = await window.electronAPI.detectClaudePath()
+      if (detected) {
+        setLocalSettings({ ...localSettings!, claudePath: detected })
+      }
     } catch {
       // ignore
     }
@@ -107,17 +108,17 @@ export function SettingsPanel() {
             </select>
           </SettingsField>
 
-          {/* Auto-accept permissions */}
-          <SettingsField label="Auto-accept Permissions" description="Skip permission prompts (use with caution)">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={localSettings.autoAcceptPermissions}
-                onChange={(e) => updateLocal('autoAcceptPermissions', e.target.checked)}
-                className="w-4 h-4 rounded border-border bg-bg-base text-accent focus:ring-accent/50"
-              />
-              <span className="text-sm text-text-secondary">Enable</span>
-            </label>
+          {/* Permission Mode */}
+          <SettingsField label="Permission Mode" description="Controls how Claude handles tool permission prompts">
+            <select
+              value={localSettings.permissionMode}
+              onChange={(e) => updateLocal('permissionMode', e.target.value)}
+              className="h-8 px-2.5 text-sm bg-bg-base border border-border rounded-md text-text-primary focus:outline-none focus:ring-1 focus:ring-accent/50"
+            >
+              <option value="default">Default (ask for each tool)</option>
+              <option value="acceptEdits">Accept Edits (auto-approve file edits)</option>
+              <option value="bypassPermissions">Bypass All (skip all prompts)</option>
+            </select>
           </SettingsField>
 
           {/* Font Size */}

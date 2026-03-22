@@ -48,12 +48,13 @@ function calculateCost(entry: ParsedEntry): number {
   )
 }
 
-function parseSessionFile(filePath: string): ParsedEntry[] {
+function parseSessionFile(filePath: string): { sessionFile: string; entries: ParsedEntry[] } {
+  const sessionFile = path.basename(filePath)
   try {
     const stat = fs.statSync(filePath)
     const cached = fileCache.get(filePath)
     if (cached && cached.mtime === stat.mtimeMs) {
-      return cached.entries
+      return { sessionFile, entries: cached.entries }
     }
 
     const content = fs.readFileSync(filePath, 'utf-8')
@@ -82,16 +83,21 @@ function parseSessionFile(filePath: string): ParsedEntry[] {
     }
 
     fileCache.set(filePath, { mtime: stat.mtimeMs, entries })
-    return entries
+    return { sessionFile, entries }
   } catch {
-    return []
+    return { sessionFile, entries: [] }
   }
 }
 
-function getAllEntries(): ParsedEntry[] {
+interface SessionEntries {
+  sessionFile: string
+  entries: ParsedEntry[]
+}
+
+function getAllEntries(): SessionEntries[] {
   if (!fs.existsSync(PROJECTS_DIR)) return []
 
-  const allEntries: ParsedEntry[] = []
+  const allSessions: SessionEntries[] = []
 
   try {
     const projectDirs = fs.readdirSync(PROJECTS_DIR, { withFileTypes: true })
@@ -103,8 +109,7 @@ function getAllEntries(): ParsedEntry[] {
         const files = fs.readdirSync(projectPath)
         for (const file of files) {
           if (!file.endsWith('.jsonl')) continue
-          const entries = parseSessionFile(path.join(projectPath, file))
-          allEntries.push(...entries)
+          allSessions.push(parseSessionFile(path.join(projectPath, file)))
         }
       } catch {
         // Skip unreadable project dirs
@@ -114,66 +119,63 @@ function getAllEntries(): ParsedEntry[] {
     // Projects dir unreadable
   }
 
-  return allEntries
+  return allSessions
 }
 
 export function getUsageData(): UsageData {
-  const entries = getAllEntries()
+  const sessions = getAllEntries()
 
   // Aggregate by day
   const dailyMap = new Map<string, DailyUsage>()
+  const dailySessions = new Map<string, Set<string>>() // date → set of session files
   const modelMap = new Map<string, { inputTokens: number; outputTokens: number; cost: number }>()
   let totalInput = 0
   let totalOutput = 0
   let totalCost = 0
-  const sessionIds = new Set<string>()
 
-  for (const entry of entries) {
-    const date = entry.timestamp.slice(0, 10) // YYYY-MM-DD
-    const cost = calculateCost(entry)
+  for (const { sessionFile, entries } of sessions) {
+    for (const entry of entries) {
+      const date = entry.timestamp.slice(0, 10) // YYYY-MM-DD
+      const cost = calculateCost(entry)
 
-    // Daily aggregation
-    const existing = dailyMap.get(date) || {
-      date,
-      inputTokens: 0,
-      outputTokens: 0,
-      cost: 0,
-      sessions: 0,
+      // Daily aggregation
+      const existing = dailyMap.get(date) || {
+        date,
+        inputTokens: 0,
+        outputTokens: 0,
+        cost: 0,
+        sessions: 0,
+      }
+      existing.inputTokens += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
+      existing.outputTokens += entry.outputTokens
+      existing.cost += cost
+      dailyMap.set(date, existing)
+
+      // Track sessions per day
+      const daySessionSet = dailySessions.get(date) || new Set()
+      daySessionSet.add(sessionFile)
+      dailySessions.set(date, daySessionSet)
+
+      // Model aggregation
+      const modelKey = normalizeModelName(entry.model)
+      const modelData = modelMap.get(modelKey) || { inputTokens: 0, outputTokens: 0, cost: 0 }
+      modelData.inputTokens += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
+      modelData.outputTokens += entry.outputTokens
+      modelData.cost += cost
+      modelMap.set(modelKey, modelData)
+
+      // Totals
+      totalInput += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
+      totalOutput += entry.outputTokens
+      totalCost += cost
     }
-    existing.inputTokens += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
-    existing.outputTokens += entry.outputTokens
-    existing.cost += cost
-    dailyMap.set(date, existing)
-
-    // Model aggregation
-    const modelKey = normalizeModelName(entry.model)
-    const modelData = modelMap.get(modelKey) || { inputTokens: 0, outputTokens: 0, cost: 0 }
-    modelData.inputTokens += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
-    modelData.outputTokens += entry.outputTokens
-    modelData.cost += cost
-    modelMap.set(modelKey, modelData)
-
-    // Totals
-    totalInput += entry.inputTokens + entry.cacheWriteTokens + entry.cacheReadTokens
-    totalOutput += entry.outputTokens
-    totalCost += cost
   }
 
-  // Count sessions from JSONL files
-  try {
-    if (fs.existsSync(PROJECTS_DIR)) {
-      const projectDirs = fs.readdirSync(PROJECTS_DIR, { withFileTypes: true })
-      for (const dir of projectDirs) {
-        if (!dir.isDirectory()) continue
-        try {
-          const files = fs.readdirSync(path.join(PROJECTS_DIR, dir.name))
-          for (const file of files) {
-            if (file.endsWith('.jsonl')) sessionIds.add(file)
-          }
-        } catch { /* skip */ }
-      }
-    }
-  } catch { /* skip */ }
+  // Set session counts per day
+  for (const [date, sessionSet] of dailySessions) {
+    const day = dailyMap.get(date)
+    if (day) day.sessions = sessionSet.size
+  }
 
   // Sort daily by date
   const daily = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date))
@@ -190,7 +192,7 @@ export function getUsageData(): UsageData {
       inputTokens: totalInput,
       outputTokens: totalOutput,
       cost: totalCost,
-      sessions: sessionIds.size,
+      sessions: sessions.length,
     },
     byModel,
   }

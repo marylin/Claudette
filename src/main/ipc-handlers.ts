@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { sendMessage, stopClaude, setProjectPath } from './claude-bridge'
 import { listProjects, listSessions, deleteSession } from './session-manager'
-import { getSettings, updateSettings } from './settings'
+import { getSettings, updateSettings, detectClaudePath } from './settings'
 import { getGitStatus, getGitDiff, gitStage, gitUnstage, gitCommit, getGitRemoteUrl, getGitLog } from './git-manager'
 import { listAgents, saveAgent, deleteAgent, getAgent } from './agents-manager'
 import { getUsageData } from './usage-analyzer'
@@ -148,6 +148,10 @@ export function registerIpcHandlers(ipcMain: IpcMain): void {
 
   ipcMain.handle('settings:set', (_event, partial: Record<string, unknown>) => {
     return updateSettings(partial as any)
+  })
+
+  ipcMain.handle('settings:detect-claude', () => {
+    return detectClaudePath()
   })
 
   // Workspaces

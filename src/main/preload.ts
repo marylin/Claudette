@@ -112,6 +112,7 @@ const electronAPI = {
   // Settings
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:set', settings),
+  detectClaudePath: () => ipcRenderer.invoke('settings:detect-claude'),
 
   // Project management
   getCurrentProject: () => ipcRenderer.invoke('project:get-current'),

@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
-import { Bot, Plus, Pencil, Trash2, Play } from 'lucide-react'
+import { Bot, Plus, Pencil, Trash2, Play, MessageSquare } from 'lucide-react'
 import { EmptyState } from '../shared/EmptyState'
 import { Button } from '../shared/Button'
 import { Badge } from '../shared/Badge'
 import { useToast } from '../shared/ToastProvider'
+import { useAppStore } from '../../store/app.store'
 import type { Agent, AgentModel } from '@shared/types'
 
 export function AgentsPanel() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [editing, setEditing] = useState<Partial<Agent> | null>(null)
+  const [runningAgent, setRunningAgent] = useState<Agent | null>(null)
+  const [runPrompt, setRunPrompt] = useState('')
   const [loading, setLoading] = useState(true)
+  const setActiveTab = useAppStore((s) => s.setActiveTab)
   const { toast } = useToast()
 
   const refresh = async () => {
@@ -55,6 +59,47 @@ export function AgentsPanel() {
     } catch (err) {
       toast('error', `Failed to delete agent: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
+  }
+
+  const handleRun = async () => {
+    if (!runningAgent || !runPrompt.trim()) return
+    try {
+      await window.electronAPI.runAgent(runningAgent.id, runPrompt.trim())
+      toast('success', `Running "${runningAgent.name}" — switching to Chat`)
+      setRunningAgent(null)
+      setRunPrompt('')
+      setActiveTab('chat')
+    } catch (err) {
+      toast('error', `Failed to run agent: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  if (runningAgent) {
+    return (
+      <div className="p-6 max-w-2xl mx-auto space-y-4">
+        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+          <Play className="w-4 h-4 text-accent" />
+          Run: {runningAgent.name}
+        </h2>
+        <p className="text-xs text-text-secondary">{runningAgent.description || 'No description'}</p>
+        <div>
+          <label className="block text-xs font-medium text-text-primary mb-1">Prompt</label>
+          <textarea
+            value={runPrompt}
+            onChange={(e) => setRunPrompt(e.target.value)}
+            rows={4}
+            className="w-full resize-none rounded-md border border-border bg-bg-base px-3 py-2 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 select-text"
+            placeholder="Enter your prompt for this agent..."
+            autoFocus
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleRun() }}
+          />
+        </div>
+        <div className="flex gap-2 pt-2">
+          <Button variant="primary" size="sm" icon={<Play className="w-3 h-3" />} onClick={handleRun}>Run</Button>
+          <Button variant="ghost" size="sm" onClick={() => { setRunningAgent(null); setRunPrompt('') }}>Cancel</Button>
+        </div>
+      </div>
+    )
   }
 
   if (editing) {
@@ -111,6 +156,7 @@ export function AgentsPanel() {
             </div>
             {agent.description && <p className="text-xs text-text-secondary mb-3">{agent.description}</p>}
             <div className="flex gap-1">
+              <Button variant="primary" size="sm" icon={<Play className="w-3 h-3" />} onClick={() => setRunningAgent(agent)}>Run</Button>
               <Button variant="ghost" size="sm" icon={<Pencil className="w-3 h-3" />} onClick={() => setEditing(agent)}>Edit</Button>
               <Button variant="ghost" size="sm" icon={<Trash2 className="w-3 h-3" />} onClick={() => handleDelete(agent.id)}>Delete</Button>
             </div>
